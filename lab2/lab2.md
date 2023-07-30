@@ -59,6 +59,7 @@
 
 2. 二维 DCT 变换 [^2]
    变换公式为：
+
    $$
    F(u,v)=c(u)c(v)\sum_{i=0}^{N-1}\sum_{j=0}^{N-1}f(i,j)\cdot
    \cos[\frac{(2i+1)\pi}{2N}u]\cdot
@@ -70,7 +71,9 @@
    \end{matrix}
    \right.
    $$
+
    逆变换公式为：
+
    $$
    f(i,j)=\sum_{u=0}^{N-1}\sum_{v=0}^{N-1}c(u)\cdot c(v)\cdot F(u,v)\cdot
    \cos[\frac{(2i+1)\pi}{2N}u]\cdot
@@ -98,9 +101,10 @@
 1. 将图像的位图分为 $8\times8$ 的小块，可以得到 $M$ 块
 
 2. 对每个小块进行 DCT 变换，按 Zigzag 排序选出 $K$ 个 ***中频系数*** 计算和 $sum=x_i\cdot w_i,\quad i=1,\cdots,K$ ，可以得到 $\frac{N}k$ 个这样的 $sum$，计算
+
    $$
    s_t=\frac{\sum_{i=1}^{\frac{N}k}sum_i}N\\
-   
+
    b_t=\left\{\begin{matrix}
     1,\quad s\gt0 \\
     0,\quad s\lt0
@@ -108,7 +112,7 @@
    \right.\\
    t=1,2,\cdots,L
    $$
-   
+
 3. 将 $L$ 个 b 恢复为 $L$ 位的位图，嵌入 bmp 图的框架即可
 
 #### 实现
@@ -154,9 +158,8 @@
    };
    ```
 
-   
-
 2. DCT 变换和逆变换：这个部分只需要按照公式编代码即可，以正变换为例
+
    ```c++
    void DCT(const BLOCK& blk1,BLOCK& blk2) {
        
@@ -179,8 +182,6 @@
    
    ```
 
-   
-
 3. 系数 $w$ 和 中频系数生成：中频系数的介绍和理解我参考了博客[^3]。我是用 `python` 实现的生成系数的操作，然后将系数作为常数复制到 `cpp` 程序中。`python` 程序在 `lab2-ass.ipynb` 中，生成的中频系数如下图
 
    <img src="ass/images/my-zigzag.png" alt="zigzag" style="zoom: 67%;" />
@@ -192,6 +193,7 @@
    - 重复上述过程直到去掉了 $n$ 个数
 
 4. 分块：分块的核心是找到该块的一个基准点，比如以每一块中的第 0 行第 0 列作为基准，然后只需要做一个位图到某个块的映射就可以了，核心代码为：
+
    ```c++
        for(int i = 0; i < width; i += 8) {
            for(int j = 0; j < height; j += 8) {
@@ -219,8 +221,6 @@
            }
        }
    ```
-
-   
 
 #### 测试效果
 
@@ -250,6 +250,7 @@
 #### 生成广义高斯分布
 
 由实验一可知，可以通过一个伯努利分布和一个指数分布来生成广义高斯分布，即可以通过相互独立的随机变量 $W\sim B(1,\frac12)$ 和 $E\sim Gamma(\frac1c,\frac{1}{\beta^c})$ 通过如下方式构造 $X\sim GGD(c,\beta)$
+
 $$
 X=\left\lbrace
 \begin{matrix}
@@ -260,6 +261,7 @@ E^{\frac1c},&\quad if\,\,W=1\\
 $$
 
 1. 代码实现为：
+
    ```c++
    double* gdd(double beta, double c, int n, int key) {
        double* res = new double[n];
@@ -294,18 +296,21 @@ $$
 2. 利用 `python` 可以将我生成的数据绘制成概率密度图，如下：
    ![my-ggd](./monte-carlo/images/my-ggd.png)
 
-### 系统性能 
+### 系统性能
 
 #### 理论推导
 
 1. $p_{fa}$ 和 $p_m$ 的定义
 
    给出两个假设 $;H_0:s_i=x_i,H_1:s_i=x_i+aw_i$，可以用线性相关器 $L({\bf S})=\frac1N\sum_{i=1}^NS_i\cdot w_i$ 来进行假设检验函数，可以得到：
+
    $$
    &L({\bf S}\mid H_0)=\frac1N\sum_{i=1}^NX_i\cdot w_i\\
    &L({\bf S}\mid H_1)=\frac1N\sum_{i=1}^NX_i\cdot w_i+a
    $$
+
    因此可以利用一个阈值 $\psi$ 来判断是否嵌入水印，即：
+
    $$
    \left\lbrace
    \begin{matrix}
@@ -314,27 +319,35 @@ $$
    \end{matrix}
    \right.
    $$
+
    定义误检概率为 $p_{fa}=P(H_1\mid H_0)$，漏检概率为 $p_m=P(H_0\mid H_1)$，因此：
+
    $$
    p_{fa}=P(\frac1N\sum_{i=1}^NX_i\cdot w_i\gt\psi)\\
    p_m=P(\frac1N\sum_{i=1}^NX_i\cdot w_i+a\lt\psi)
    $$
+
    可以假设 $X_i$ 是独立同分布的，且具有期望 $\mu$ 和标准差 $\sigma_X$，由中心极限定理，可以得到：
+
    $$
    \underset{N\rightarrow\infty}{\lim}\frac{\sum_{i=1}^NX_i-N\mu}{\sqrt{N}\sigma_x}\rightarrow N(0,1)
    $$
+
    因此，为了处理 $p_{fm}$ 和 $p_m$，可以记 $\overline{X}=\frac1N\sum_{i=1}^NX_i\cdot w_i$ 
 
 2. 计算 $E(\overline X)$ 和 $Var(\overline X)$ 
 
    计算 $E(\overline X)$ ：
+
    $$
    \begin{align}
    E(\overline X)&=E(\frac1N\sum_{i=1}^NX_i\cdot w_i)\\
    &=\frac1NE(\sum_{i\in\lbrace k:w_k=1\rbrace}^NX_i)-\frac1NE(\sum_{i\in\lbrace k:w_k=-1\rbrace}^NX_i)
    \end{align}
    $$
+
    由于 $\sum_{i=1}^Nw_i=0$，故 $\lvert\lbrace k:w_k=1\rbrace\rvert=\lvert\lbrace k:w_k=-1\rbrace\rvert$ ，则 $E(\overline X)=0$。计算均值 $Var(\overline X)$ 如下：
+
    $$
    \begin{align}
    Var(\overline X)&=E\big[(\overline{X}-E(\overline{X}))^2\big]\\
@@ -343,7 +356,9 @@ $$
    &=\frac{1}{N^2}\sum_j\sum_jw_i\cdot w_j\cdot E(X_i\cdot X_j)
    \end{align}
    $$
+
    由于 $X_i$ 服从独立同分布，则 $E(X_i\cdot X_j)=E(X_i)\cdot E(X_j),i\neq j$，则：
+
    $$
    \begin{align}
    Var(\overline X)&=\frac{1}{N^2}\sum_j\sum_jw_i\cdot w_j\cdot E(X_i\cdot X_j)\\
@@ -352,10 +367,12 @@ $$
    &=\frac{\sigma_X^2+\mu^2}{N}
    \end{align}
    $$
+
    根据 $\overline X$ 的方差和期望，可以方便的计算 $p_{fa}$ 和 $p_m$ 了
 
 3. 计算 $p_{fa}$ 和 $p_m$ 
    由于本次实验服从的分布均值为 0，因此结合中心极限定理，可以知道 $\frac{\overline{X}}{\sigma_X/\sqrt{N}}\sim N(0,1)$ 因此：
+
    $$
    \begin{align}
    p_m&=P(\overline{X}+a\lt\psi)\\
@@ -365,7 +382,9 @@ $$
    &=Q(\frac{\sqrt{N}\psi}{\sigma_X})
    \end{align}
    $$
+
    其中 $Q(x)=\int_x^{+\infty}\frac{1}{\sqrt{2\pi}}e^{-\frac{t^2}{2}}{\rm d}t$ 是尾部概率函数，记互补误差函数为 ${\rm erfc}(x)=1-{\rm erf}()x=\frac{2}{\sqrt{\pi}}\int_x^{+\infty}e^{-t^2}{\rm d}t$ 则有：
+
    $$
    \begin{align}
    Q(\sqrt{2}x)&=\int_{\sqrt{2}x}^{+\infty}\frac{1}{\sqrt{2\pi}}e^{-\frac{s^2}{2}}{\rm d}s\\
@@ -373,19 +392,20 @@ $$
    &=\frac12{\rm efrc(x)}
    \end{align}
    $$
+
    因此 $Q(x)=\frac12 {\rm erfc}(\frac{x}{\sqrt{2}})$ ，$Q^{-1}(x)=\sqrt{2}\cdot {\rm erfc}^{-1}(2x)$ 
 
-   
-
 4. 可以利用 $p_{fa}$ 反推 $\psi$ ，即： 
+
    $$
    \psi=\frac{\sigma_XQ^{-1}(p_{fa})}{\sqrt{N}}=\frac{\sqrt{2}\cdot\sigma_X\cdot {\rm erfc}^{-1}(2p_{fa})}{\sqrt{N}}
    $$
+
    此时有：
+
    $$
    p_m=1-Q(\frac{\sqrt{N}(\psi-a)}{\sigma_X})=1-Q(Q^{-1}(p_{fa})-\frac{\sqrt{N}a}{\sigma_X})
    $$
-   
 
 #### 仿真结果
 
@@ -521,11 +541,6 @@ file_name = prefix +
 
    可以从图中看出，用线性分析器的验证方法是正确的
 
-
-
-
-
 [^1]:[BMP format -Wiki](https://zh.wikipedia.org/wiki/BMP)
 [^2]:[二维DCT变换 - 腾讯云开发者社区-腾讯云 (tencent.com)](https://cloud.tencent.com/developer/article/1386017)
 [^3]:[(286条消息) 基于修改DCT中频系数的JPEG数字水印_IKHIN的博客-CSDN博客_中频系数](https://blog.csdn.net/qq_26140297/article/details/79945052)
-

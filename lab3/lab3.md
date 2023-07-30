@@ -27,6 +27,7 @@
 1. 将图像的位图分为 $8\times8$ 的小块，可以得到 $M$ 块
 
 2. 对每个小块进行 DCT 变换，按 Zigzag 排序选出 $K$ 个 ***中频系数*** 计算投影 $\overline y=\frac1N\sum_{i=1}^Ny_i\cdot w_i$ ，利用投影解码
+
    $$
    b=\left\{\begin{matrix}
     0,\quad |q_0(\overline y)-\overline y|\lt \frac\Delta4 \\
@@ -38,6 +39,7 @@
 3. 将 $L$ 个 b 恢复为 $L$ 位的位图，嵌入 bmp 图的框架即可
 
 其中二维 DCT 变换公式为：
+
 $$
 F(u,v)=c(u)c(v)\sum_{i=0}^{N-1}\sum_{j=0}^{N-1}f(i,j)\cdot
 \cos[\frac{(2i+1)\pi}{2N}u]\cdot
@@ -49,7 +51,9 @@ F(u,v)=c(u)c(v)\sum_{i=0}^{N-1}\sum_{j=0}^{N-1}f(i,j)\cdot
 \end{matrix}
 \right.
 $$
+
 逆变换公式为：
+
 $$
 f(i,j)=\sum_{u=0}^{N-1}\sum_{v=0}^{N-1}c(u)\cdot c(v)\cdot F(u,v)\cdot
 \cos[\frac{(2i+1)\pi}{2N}u]\cdot
@@ -61,7 +65,6 @@ f(i,j)=\sum_{u=0}^{N-1}\sum_{v=0}^{N-1}c(u)\cdot c(v)\cdot F(u,v)\cdot
 \end{matrix}
 \right.
 $$
-
 
 ## 代码实现
 

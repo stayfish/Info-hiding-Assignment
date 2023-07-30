@@ -6,12 +6,12 @@
   - [产生服从 $Uniform(0,1)$ 分布](#产生服从-uniform01-分布)
     - [c++生成随机数的机制](#c生成随机数的机制)
     - [代码实现](#代码实现)
-  - [产生服从高斯分布 $N(\mu,\delta^2)$ 的随机数](#产生服从高斯分布-nmudelta2-的随机数)
+  - [产生服从高斯分布 $N(\\mu,\\delta^2)$ 的随机数](#产生服从高斯分布-nmudelta2-的随机数)
     - [Box-Muller transform](#box-muller-transform)
     - [代码实现](#代码实现-1)
     - [参数估计](#参数估计)
     - [CDF 比较](#cdf-比较)
-  - [产生服从指数分布 $Exp(\frac{1}{\beta})$ 的随机数](#产生服从指数分布-expfrac1beta-的随机数)
+  - [产生服从指数分布 $Exp(\\frac{1}{\\beta})$ 的随机数](#产生服从指数分布-expfrac1beta-的随机数)
     - [逆函数法构造指数分布](#逆函数法构造指数分布)
     - [代码实现](#代码实现-2)
     - [参数估计](#参数估计-1)
@@ -52,13 +52,13 @@ c++ 将随机数抽象为两个部分[^1]：***gennerator*** 以及 ***distribut
 template<typename T>
 vector<T> Uniform(int l, int r)
 {
-	mt19937_64 gen(SEED);
-	cout << "#" << gen.min() << " " << gen.max() << endl;
-	uniform_real_distribution<T> dis(l, r);
-	vector<T> seq(N);
-	for (int i=0;i<N;i++)
-		seq[i] = dis(gen);
-	return seq;
+  mt19937_64 gen(SEED);
+  cout << "#" << gen.min() << " " << gen.max() << endl;
+  uniform_real_distribution<T> dis(l, r);
+  vector<T> seq(N);
+  for (int i=0;i<N;i++)
+    seq[i] = dis(gen);
+  return seq;
 }
 ```
 
@@ -73,14 +73,18 @@ vector<T> Uniform(int l, int r)
 假定我们有两个独立的随机变量 $X,Y$，满足$x\sim N(0,1),Y\sim N(0,1)$
 因此他们的联合概率分布为 $p(X,Y)=\frac{1}{2\pi}e^{-\frac{X^2+Y^2}{2}}$，这是一个极利于坐标变化的形式，因此可以做变换 $X=R\cos\theta,Y=R\sin\theta$
 容易验证：
+
 $$
 \int_{-\infty}^{\infty}\int_{-\infty}^{\infty}\frac{1}{2\pi}e^{-\frac{X^2+Y^2}{2}}{\rm d}X{\rm d}Y=\int_{0}^{2\pi}\int_{0}^{\infty}\frac{1}{2\pi}e^{-\frac{R^2}{2}}R{\rm d}R{\rm d}\theta=1
 $$
+
 因此可以求得随机变量 $R,\theta$ 的分布函数
+
 $$
 P_R(R\leq r)=\int_0^{2\pi}\int_{0}^r\frac{1}{2\pi}e^{-\frac{R^2}{2}}R{\rm d}R{\rm d}\theta=1-e^{-\frac{r^2}{2}} \\
 P_\theta(\theta\leq\phi)=\int_0^\phi\int_0^\infty\frac{1}{2\pi}e^{-\frac{R^2}{2}}R{\rm d}R{\rm d}\theta=\frac{\phi}{2\pi}
 $$
+
 显然有 $\theta\sim U(0,2\pi),\frac{R^2}{2}\sim Exp(1)$
 对于前者，令 $U_1\sim U(0,1),\theta=2\pi U_1$，则有 $\theta\sim U(0,2\pi)$
 对于后者，可以用逆函数方法构造，即 
@@ -88,6 +92,7 @@ $R=F_R^{-1}(U')=\sqrt{-2\ln (1-U')}$，其中 $U'\sim U(0,1)$
 因此令 $U_2=1-U'$，
 则有 $U_2\sim U(0,1),R=\sqrt{-2\ln U_2}\sim Exp(1)$
 代入坐标变化式，可以得到两个服从标准正态分布的随机变量：
+
 $$
 X=\cos(2\pi U_1)\sqrt{-2\ln U_2} \\
 Y=\sin(2\pi U_1)\sqrt{-2\ln U_2}
@@ -100,19 +105,18 @@ $$
 template<typename T>
 vector<T> Normal(T mu, T delta2)
 {
-	ofstream out;
+  ofstream out; 
+  vector<T> u1 = Uniform<T>(0, 1);
+  vector<T> u2 = Uniform<T>(0, 1);
+  vector<T> seq(N);
+  for (int i = 0; i < N; i++)
+    seq[i] = cos(2 * PI * u1[i]) * sqrt(-2 * log(u2[i])) * sqrt(delta2) + mu;
 
-	vector<T> u1 = Uniform<T>(0, 1);
-	vector<T> u2 = Uniform<T>(0, 1);
-	vector<T> seq(N);
-	for (int i = 0; i < N; i++)
-		seq[i] = cos(2 * PI * u1[i]) * sqrt(-2 * log(u2[i])) * sqrt(delta2) + mu;
-	
-	// 导出数据
-	// 该部分省略
-	// ...
+  // 导出数据
+  // 该部分省略
+  // ...  
 
-	return seq;
+  return seq;
 }
 ```
 
@@ -129,18 +133,18 @@ vector<T> Normal(T mu, T delta2)
 // 极大似然估计
 T mu(0), delta2(0);
 for (auto elem : X)
-	mu += elem;
+  mu += elem;
 mu = mu / N;
 for (auto elem : X)
-	delta2 += (elem - mu) * (elem - mu);
+  delta2 += (elem - mu) * (elem - mu);
 delta2 = delta2 / N;
 return { mu,delta2 };
 // 矩估计
 T mu(0), delta2(0);
 for (auto elem : X)
 {
-	mu += elem;
-	delta2 += elem * elem;
+  mu += elem;
+  delta2 += elem * elem;
 }
 mu = mu / N;
 delta2 = delta2 / N - mu * mu;
@@ -195,9 +199,11 @@ return { mu,delta2 };
 
 指数分布的密度函数为 $f_X(x)=\frac{1}{\beta}e^{-\frac{x}{\beta}}$
 分布函数为
+
 $$
 F(x)=\int_{-\infty}^x\frac{1}{\beta}e^{-\frac{t}{\beta}}{\rm d}t=\int_0^{\frac{x}{\beta}}e^{-m}{\rm d}m=1-e^{-\frac{x}{\beta}}
 $$
+
 令 $X=F^{-1}(U)=-\beta\ln(1-U)$，则有 $X\sim Exp(\beta)$
 
 ### 代码实现
@@ -206,16 +212,16 @@ $$
 template<typename T>
 vector<T> Exp(T beta)
 {
-	vector<T> u = Uniform<T>(0, 1);
-	vector<T> seq(N);
-	for (int i = 0; i < N; i++)
-		seq[i] = -beta * log(1 - u[i]);
-	
-	// 导出数据
-	// 该部分省略
-	// ...
+  vector<T> u = Uniform<T>(0, 1);
+  vector<T> seq(N);
+  for (int i = 0; i < N; i++)
+    seq[i] = -beta * log(1 - u[i]);
 
-	return seq;
+  // 导出数据
+  // 该部分省略
+  // ...
+
+  return seq;
 }
 ```
 
@@ -224,6 +230,7 @@ vector<T> Exp(T beta)
 可以对指数分布的参数 $\beta$ 进行极大似然估计
 令似然为 $L(\beta)=\ln f_X(X_1X_2\cdots X_n\mid\theta)$
 则 $\beta=\arg\underset{\beta>0}{\max}L(\beta)$
+
 $$
 L(\beta)=\ln\prod_{i=1}^N\frac{1}{\beta}e^{-\frac{X_i}{\beta}}=-N\ln\beta-\frac{\sum_{i=1}^NX_i}{\beta}\\
 令\frac{\partial{L(\beta)}}{\partial{\beta}}=\frac{\sum_{i=1}^NX_i-N\beta}{\beta^2}=0\\
@@ -236,7 +243,7 @@ $$
 // 极大似然估计
 T beta(0);
 for (auto elem : X)
-	beta += elem;
+  beta += elem;
 beta = beta / N;
 return { beta,0 }; // 只需要返回的第一个值
 ```
@@ -314,11 +321,11 @@ $$
       // the probability of x=1 is p
       vector<int> Bernoulli(double p)
       {
-      	vector<int> seq(N);
-      	vector<double> u = Uniform<double>(0, 1);
-      	for (int i = 0; i < N; i++)
-      		seq[i] = (u[i] <= p) ? 1 : 0;
-      	return seq;
+        vector<int> seq(N);
+        vector<double> u = Uniform<double>(0, 1);
+        for (int i = 0; i < N; i++)
+          seq[i] = (u[i] <= p) ? 1 : 0;
+        return seq;
       }
       ```
 
@@ -331,17 +338,17 @@ $$
     template<typename T>
     vector<T> GDD_C_1(T beta)
     {
-    	vector<int> bSeq = Bernoulli(0.5);
-    	vector<T> expSeq = Exp(beta);
-    	vector<T> seq(N);
-    	for (int i = 0; i < N; i++)
-    	{
-    		if (bSeq[i] == 0)
-    			seq[i] = -expSeq[i];
-    		else
-    			seq[i] = expSeq[i];
-    	}
-    	return seq;
+      vector<int> bSeq = Bernoulli(0.5);
+      vector<T> expSeq = Exp(beta);
+      vector<T> seq(N);
+      for (int i = 0; i < N; i++)
+      {
+        if (bSeq[i] == 0)
+          seq[i] = -expSeq[i];
+        else
+          seq[i] = expSeq[i];
+      }
+      return seq;
     }
     ```
 
